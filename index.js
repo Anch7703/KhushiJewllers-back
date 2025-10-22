@@ -21,7 +21,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://khushijewellers-front.onrender.com",
 ];
-
+const cors = require("cors");
 app.use(
   cors({
     origin: function (origin, callback) {
