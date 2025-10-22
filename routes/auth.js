@@ -84,13 +84,22 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", { session: false, failureRedirect: "/" }),
-  (req, res) => {
-    // ✅ Redirect back to frontend (works both locally and on Render)
-    const redirectURL =
-      process.env.CLIENT_URL || "http://localhost:5173";
-    res.redirect(`${redirectURL}?googleLogin=true`);
+  async (req, res) => {
+    const token = jwt.sign(
+      {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    const redirectURL = `${process.env.CLIENT_URL || "http://localhost:5173"}?token=${token}`;
+    res.redirect(redirectURL);
   }
 );
+
 
 // ======================
 // LOGOUT

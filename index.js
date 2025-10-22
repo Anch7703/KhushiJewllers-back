@@ -67,7 +67,7 @@ app.use(passport.session());
 // ✅ Static image serving (important for product images)
 app.use(
   "/images/products",
-  express.static(path.join(__dirname, "../front/public/images/products"))
+  express.static(path.join(__dirname, "/public/images/products"))
 );
 
 // ✅ API routes
