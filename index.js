@@ -4,63 +4,65 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const passport = require("passport");
 const session = require("express-session");
+const MongoStore = require("connect-mongo");
 const path = require("path");
 
+// Routes
 const authRoutes = require("./routes/auth");
 const productRoutes = require("./routes/products");
 const wishlistRoutes = require("./routes/wishlist");
 
-
-require("./config/passport"); // passport config
+require("./config/passport"); // Passport setup
 
 const app = express();
-// serve images located in front/public/images/products
-app.use("/images/products", express.static(path.join(__dirname, "../front/public/images/products")));
 
+// ✅ Middleware
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+  })
+);
 
-
-// debug helper (temporary) to display the exact file path being requested
-app.get("/debug-image/:name", (req, res) => {
-  const filePath = path.join(__dirname, "front", "public", "images", "products", req.params.name);
-  console.log("DEBUG trying to send file:", filePath);
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error("sendFile error:", err);
-      return res.status(404).send("not found: " + filePath);
-    }
-  });
-});
-
-app.use(express.static(path.join(__dirname, "dist")));
-
-// Middleware
-app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true,
-}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// Optional session (only needed if using Passport sessions)
+
+// ✅ Secure session store using MongoDB Atlas
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "supersecret",
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 2 } // 2 hours
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGODB_URI, // unified variable
+      collectionName: "sessions",
+      ttl: 60 * 60 * 2, // 2 hours
+    }),
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 2, // 2 hours
+    },
   })
 );
 
-
+// ✅ Passport initialization
 app.use(passport.initialize());
 app.use(passport.session());
 
-// API Routes
+// ✅ Static image handling
+app.use(
+  "/images/products",
+  express.static(path.join(__dirname, "../front/public/images/products"))
+);
+
+// ✅ API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 
-
-// Route to check logged-in user
+// ✅ Logged-in user route
 app.get("/api/auth/user", (req, res) => {
   if (req.isAuthenticated()) {
     res.json({ user: req.user });
@@ -68,30 +70,37 @@ app.get("/api/auth/user", (req, res) => {
     res.json({ user: null });
   }
 });
-// Root
-app.get("/", (req, res) => res.send("Jewelry store backend is running..."));
 
-// Google OAuth
+// ✅ Google OAuth
 app.get("/api/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
 app.get(
   "/api/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
-  (req, res) => res.redirect("http://localhost:5173/")
+  (req, res) => res.redirect(process.env.CLIENT_URL || "http://localhost:5173/")
 );
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
 
-// Error handler (after routes)
+// ✅ Production: Serve frontend build
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "dist")));
+
+  app.get("/*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "dist", "index.html"));
+  });
+}
+
+// ✅ Error handler
 app.use(require("./middleware/errorHandler"));
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+// ✅ MongoDB Connection + Server Start
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("✅ MongoDB connected"))
-  .then(() => app.listen(5000, () => console.log("🚀 Server running on port 5000")))
+  .then(() => {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  })
   .catch((err) => console.error("❌ DB connection error:", err));
-
