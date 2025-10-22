@@ -4,29 +4,43 @@ const mongoose = require("mongoose");
 const passport = require("passport");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
-const path = require("path");
 const cors = require("cors");
+const path = require("path");
 
+// Routes
 const authRoutes = require("./routes/auth");
 const productRoutes = require("./routes/products");
 const wishlistRoutes = require("./routes/wishlist");
-require("./config/passport");
+
+require("./config/passport"); // Passport setup
 
 const app = express();
 
-// ✅ Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// ✅ Allowed origins (your frontend + local dev)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://khushijewellers-front.onrender.com",
+];
 
-// ✅ CORS (you can remove this entirely once merged)
+// ✅ CORS setup
 app.use(
   cors({
-    origin: true, // allow same domain + dev
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
 
-// ✅ Mongo session
+// ✅ Express middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ✅ Session setup with MongoStore
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "supersecret",
@@ -35,48 +49,63 @@ app.use(
     store: MongoStore.create({
       mongoUrl: process.env.MONGODB_URI,
       collectionName: "sessions",
+      ttl: 60 * 60 * 2,
     }),
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 2,
+      maxAge: 1000 * 60 * 60 * 2, // 2 hours
     },
   })
 );
 
+// ✅ Initialize passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ✅ Static image handling
-app.use("/images/products", express.static(path.join(__dirname, "../front/public/images/products")));
+// ✅ Static image serving (important for product images)
+app.use(
+  "/images/products",
+  express.static(path.join(__dirname, "../front/public/images/products"))
+);
 
-// ✅ API Routes
+// ✅ API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 
-// ✅ Google OAuth redirect
+// ✅ Logged-in user check
+app.get("/api/auth/user", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ user: req.user });
+  } else {
+    res.json({ user: null });
+  }
+});
+
+// ✅ Google OAuth routes
 app.get("/api/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
 app.get(
   "/api/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
-  (req, res) => res.redirect("/")
+  (req, res) => res.redirect(process.env.CLIENT_URL || "http://localhost:5173/")
 );
 
-// ✅ Serve React frontend (from Vite build)
-app.use(express.static(path.join(__dirname, "../front/dist")));
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.resolve(__dirname, "../front/dist", "index.html"));
-});
 
-// ✅ Start server
+// ✅ Error handler middleware
+app.use(require("./middleware/errorHandler"));
+
+// ✅ Connect to MongoDB & start server
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("✅ MongoDB connected"))
   .then(() => {
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`🚀 Running on port ${PORT}`));
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
-  .catch((err) => console.error("❌ Mongo error:", err));
+  .catch((err) => console.error("❌ DB connection error:", err));
