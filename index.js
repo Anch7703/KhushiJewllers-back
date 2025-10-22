@@ -109,3 +109,7 @@ mongoose
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch((err) => console.error("❌ DB connection error:", err));
+console.log("Environment:", process.env.NODE_ENV);
+console.log("Callback URL:", process.env.NODE_ENV === "production"
+  ? "https://khushijewllers.onrender.com/api/auth/google/callback"
+  : "http://localhost:5000/api/auth/google/callback");
