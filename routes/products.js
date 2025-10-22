@@ -6,39 +6,36 @@ const Product = require("../models/Product");
 
 const router = express.Router();
 
+// ✅ Always keep both localhost and production frontends
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://khushijewellers.onrender.com"
+  "https://khushijewellers-front.onrender.com", // your Render frontend
 ];
 
 router.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("Not allowed by CORS"));
-      }
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      console.warn("❌ Blocked by CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
   })
 );
 
-
-// Helper to create a correct public URL for an image
+// ✅ Helper: Build correct image URL
 const makeImageUrl = (img, req) => {
   if (!img) return null;
-  // already a full absolute URL
+
+  // already a full URL
   if (img.startsWith("http://") || img.startsWith("https://")) return img;
-  // already a server-relative images path
-  if (img.startsWith("/images")) return `${req.protocol}://${req.get("host")}${img}`;
-  // otherwise assume just the filename and build path
-  return `${req.protocol}://${req.get("host")}/images/products/${img}`;
+
+  // if it's stored under /images/products locally or in Render
+  return `${req.protocol}://${req.get("host")}/images/products/${path.basename(img)}`;
 };
 
-// Get all products (with category/subcategory/featured filtering)
+// ✅ Fetch all products (with filtering)
 router.get("/", async (req, res) => {
   try {
     const { category, subcategory, featured, limit } = req.query;
@@ -55,8 +52,7 @@ router.get("/", async (req, res) => {
     const products = await productsQuery;
 
     const productsWithImageURL = products.map((p) => {
-      const doc = p._doc || p.toObject(); // safe extraction
-      // Support common field names: image, imageUrl, img
+      const doc = p._doc || p.toObject();
       const imageField = doc.image || doc.imageUrl || doc.img || null;
 
       return {
@@ -65,15 +61,14 @@ router.get("/", async (req, res) => {
       };
     });
 
-    console.log("Sending products with images:", productsWithImageURL.map(p => p.imageUrl));
     res.json(productsWithImageURL);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Product fetch error:", err);
+    res.status(500).json({ error: "Server error while fetching products" });
   }
 });
 
-// Get product by ID
+// ✅ Fetch product by ID
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -81,15 +76,14 @@ router.get("/:id", async (req, res) => {
 
     const doc = product._doc || product.toObject();
     const imageField = doc.image || doc.imageUrl || doc.img || null;
-    const productWithUrl = {
+
+    res.json({
       ...doc,
       imageUrl: makeImageUrl(imageField, req),
-    };
-
-    res.json(productWithUrl);
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Product ID fetch error:", err);
+    res.status(500).json({ error: "Server error while fetching product" });
   }
 });
 

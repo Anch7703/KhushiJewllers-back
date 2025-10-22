@@ -81,14 +81,13 @@ router.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
-
 router.get(
   "/google/callback",
   passport.authenticate("google", { session: false, failureRedirect: "/" }),
   (req, res) => {
+    // ✅ Redirect back to frontend (works both locally and on Render)
     const redirectURL =
-      process.env.FRONTEND_URL || "http://localhost:5173";
-
+      process.env.CLIENT_URL || "http://localhost:5173";
     res.redirect(`${redirectURL}?googleLogin=true`);
   }
 );
