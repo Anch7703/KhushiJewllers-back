@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
+
 const passport = require("passport");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
@@ -17,15 +17,23 @@ require("./config/passport"); // Passport setup
 const app = express();
 
 // ✅ Middleware
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://khushijewellers-front.onrender.com",
+];
+
 app.use(
   cors({
-    origin:["http://localhost:5173",
-    "https://khushijewellers.onrender.com",
-  ],
+    origin: function (origin, callback) {
+      // allow requests with no origin (like mobile apps, curl, etc)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("CORS not allowed from this origin: " + origin));
+    },
     credentials: true,
-
   })
 );
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

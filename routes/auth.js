@@ -86,7 +86,10 @@ router.get(
   "/google/callback",
   passport.authenticate("google", { session: false, failureRedirect: "/" }),
   (req, res) => {
-    res.redirect("http://localhost:5173?googleLogin=true");
+    const redirectURL =
+      process.env.FRONTEND_URL || "http://localhost:5173";
+
+    res.redirect(`${redirectURL}?googleLogin=true`);
   }
 );
 
