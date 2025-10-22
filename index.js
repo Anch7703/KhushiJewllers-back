@@ -31,7 +31,7 @@ app.get("/debug-image/:name", (req, res) => {
   });
 });
 
-
+app.use(express.static(path.join(__dirname, "dist")));
 
 // Middleware
 app.use(cors({
@@ -79,6 +79,9 @@ app.get(
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => res.redirect("http://localhost:5173/")
 );
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
 
 // Error handler (after routes)
 app.use(require("./middleware/errorHandler"));
