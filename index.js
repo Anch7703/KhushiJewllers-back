@@ -20,6 +20,8 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "https://khushijewellers-front.onrender.com",
+  "https://khushijewellers.co.in",
+  "https://www.khushijewellers.co.in",
 ];
 
 // ✅ CORS setup
@@ -64,10 +66,10 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ✅ Static image serving (important for product images)
+// ✅ Static image serving
 app.use(
   "/images/products",
-  express.static(path.join(__dirname, "/public/images/products"))
+  express.static(path.join(__dirname, "public/images/products"))
 );
 
 // ✅ API routes
@@ -84,7 +86,7 @@ app.get("/api/auth/user", (req, res) => {
   }
 });
 
-// ✅ Google OAuth routes
+// ✅ Google OAuth
 app.get("/api/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
 app.get(
@@ -93,25 +95,28 @@ app.get(
   (req, res) => res.redirect(process.env.CLIENT_URL || "http://localhost:5173/")
 );
 
-
 // ✅ Error handler middleware
 app.use(require("./middleware/errorHandler"));
 
 // ✅ Serve frontend build in production
 if (process.env.NODE_ENV === "production") {
-  const __dirnamePath = path.resolve();
-  const distPath = path.join(__dirnamePath, "front", "dist");
+  const distPath = path.join(__dirname, "../front/dist"); // ✅ fixed relative path
 
-  // Serve static files
+  console.log("Serving static from:", distPath);
+
   app.use(express.static(distPath));
 
-  // Catch-all route for React
-  app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
+  app.get("/*", (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"), (err) => {
+      if (err) {
+        console.error("Error sending index.html:", err);
+        res.status(500).send("Error loading the app");
+      }
+    });
   });
 }
 
-// ✅ Connect to MongoDB & start server
+// ✅ MongoDB connection + start
 mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
@@ -123,7 +128,11 @@ mongoose
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch((err) => console.error("❌ DB connection error:", err));
+
 console.log("Environment:", process.env.NODE_ENV);
-console.log("Callback URL:", process.env.NODE_ENV === "production"
-  ? "https://khushijewllers.onrender.com/api/auth/google/callback"
-  : "http://localhost:5000/api/auth/google/callback");
+console.log(
+  "Callback URL:",
+  process.env.NODE_ENV === "production"
+    ? "https://khushijewellers.co.in/api/auth/google/callback"
+    : "http://localhost:5000/api/auth/google/callback"
+);
