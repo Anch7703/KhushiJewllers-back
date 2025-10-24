@@ -5,7 +5,6 @@ const passport = require("passport");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const cors = require("cors");
-const path = require("path");
 
 // Routes
 const authRoutes = require("./routes/auth");
@@ -103,17 +102,18 @@ app.use(require("./middleware/errorHandler"));
 
 // ✅ Serve frontend build in production
 // ✅ Serve frontend build for production safely (no '*' crash)
+// ✅ Serve frontend build in production
+const path = require("path");
+
 if (process.env.NODE_ENV === "production") {
+  const __dirname1 = path.resolve();
+  app.use(express.static(path.join(__dirname1, "front", "dist")));
 
-  const frontendPath = path.join(__dirname, "../front/dist");
-  app.use(express.static(frontendPath));
-
-  // Catch-all handler for non-API routes
-  app.use((req, res, next) => {
-    if (req.originalUrl.startsWith("/api")) return next(); // let API routes work
-    res.sendFile(path.join(frontendPath, "index.html"));
+  app.get(/.*/, (req, res) => {
+    res.sendFile(path.resolve(__dirname1, "front", "dist", "index.html"));
   });
 }
+
 
 
 // ✅ MongoDB connection + start
