@@ -99,22 +99,6 @@ app.get(
 app.use(require("./middleware/errorHandler"));
 
 // ✅ Serve frontend build in production
-if (process.env.NODE_ENV === "production") {
-  const distPath = path.join(__dirname, "../front/dist"); // ✅ fixed relative path
-
-  console.log("Serving static from:", distPath);
-
-  app.use(express.static(distPath));
-
-  app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"), (err) => {
-      if (err) {
-        console.error("Error sending index.html:", err);
-        res.status(500).send("Error loading the app");
-      }
-    });
-  });
-}
 
 // ✅ MongoDB connection + start
 mongoose
