@@ -96,6 +96,17 @@ app.get(
 
 // ✅ Error handler middleware
 app.use(require("./middleware/errorHandler"));
+// ✅ Serve frontend build in production
+if (process.env.NODE_ENV === "production") {
+  const __dirnamePath = path.resolve();
+  const distPath = path.join(__dirnamePath, "front", "dist");
+
+  app.use(express.static(distPath));
+
+  app.get("/.*/", (req, res) => {
+    res.sendFile(path.resolve(distPath, "index.html"));
+  });
+}
 
 // ✅ Connect to MongoDB & start server
 mongoose
