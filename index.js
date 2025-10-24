@@ -11,7 +11,10 @@ const path = require("path");
 const authRoutes = require("./routes/auth");
 const productRoutes = require("./routes/products");
 const wishlistRoutes = require("./routes/wishlist");
-
+app.use(
+  "/images/products",
+  express.static(path.join(__dirname, "public/images/products"))
+);
 require("./config/passport"); // Passport setup
 
 const app = express();
@@ -67,10 +70,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ✅ Static image serving
-app.use(
-  "/images/products",
-  express.static(path.join(__dirname, "public/images/products"))
-);
+
 
 // ✅ API routes
 app.use("/api/auth", authRoutes);

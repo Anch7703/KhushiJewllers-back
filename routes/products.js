@@ -24,12 +24,13 @@ router.use(
   })
 );
 
-// ✅ Helper: Build correct image URL
 const makeImageUrl = (img) => {
   if (!img) return null;
 
+  // Already a full URL
   if (img.startsWith("http://") || img.startsWith("https://")) return img;
 
+  // Use your actual backend domain
   return `https://khushijewllers.onrender.com/images/products/${path.basename(img)}`;
 };
 
