@@ -96,15 +96,18 @@ app.get(
 
 // ✅ Error handler middleware
 app.use(require("./middleware/errorHandler"));
+
 // ✅ Serve frontend build in production
 if (process.env.NODE_ENV === "production") {
   const __dirnamePath = path.resolve();
   const distPath = path.join(__dirnamePath, "front", "dist");
 
+  // Serve static files
   app.use(express.static(distPath));
 
-  app.get("/.*/", (req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  // Catch-all route for React
+  app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
   });
 }
 
