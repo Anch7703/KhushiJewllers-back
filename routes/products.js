@@ -30,7 +30,7 @@ const makeImageUrl = (img) => {
 
   if (img.startsWith("http://") || img.startsWith("https://")) return img;
 
-  return `https://khushijewllers.onrender.com/images/products/${path.basename(img)}`;
+  return `https://khushijewllers.onrender.com/${path.basename(img)}`;
 };
 
 // ✅ Fetch all products (with filtering)
