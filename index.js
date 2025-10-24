@@ -102,6 +102,19 @@ app.get(
 app.use(require("./middleware/errorHandler"));
 
 // ✅ Serve frontend build in production
+// ✅ Serve frontend build for production safely (no '*' crash)
+if (process.env.NODE_ENV === "production") {
+
+  const frontendPath = path.join(__dirname, "../front/dist");
+  app.use(express.static(frontendPath));
+
+  // Catch-all handler for non-API routes
+  app.use((req, res, next) => {
+    if (req.originalUrl.startsWith("/api")) return next(); // let API routes work
+    res.sendFile(path.join(frontendPath, "index.html"));
+  });
+}
+
 
 // ✅ MongoDB connection + start
 mongoose
