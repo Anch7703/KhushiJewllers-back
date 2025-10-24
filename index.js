@@ -5,7 +5,7 @@ const passport = require("passport");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const cors = require("cors");
-
+const path = require("path");
 // Routes
 const authRoutes = require("./routes/auth");
 const productRoutes = require("./routes/products");
@@ -102,8 +102,7 @@ app.use(require("./middleware/errorHandler"));
 
 // ✅ Serve frontend build in production
 // ✅ Serve frontend build for production safely (no '*' crash)
-// ✅ Serve frontend build in production
-const path = require("path");
+
 
 if (process.env.NODE_ENV === "production") {
   const __dirname1 = path.resolve();
