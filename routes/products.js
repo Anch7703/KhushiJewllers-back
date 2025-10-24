@@ -32,7 +32,8 @@ const makeImageUrl = (img, req) => {
   if (img.startsWith("http://") || img.startsWith("https://")) return img;
 
   // if it's stored under /images/products locally or in Render
-  return `${req.protocol}://${req.get("host")}/images/products/${path.basename(img)}`;
+ return `https://khushijewllers.onrender.com/images/products/${path.basename(img)}`;
+
 };
 
 // ✅ Fetch all products (with filtering)
