@@ -43,7 +43,7 @@ router.get("/", async (req, res) => {
 
     if (category) query.category = { $regex: new RegExp(`^${category}$`, "i") };
     if (subcategory && subcategory !== "all")
-      query.subCategory = { $regex: new RegExp(`^${subcategory}$`, "i") };
+      query.subCategory = { $regex: new RegExp(subcategory, "i") };
     if (featured !== undefined) query.featured = featured === "true";
 
     let productsQuery = Product.find(query);
