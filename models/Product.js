@@ -9,7 +9,7 @@ const productSchema = new mongoose.Schema(
       enum: ["All items", "Necklaces", "Rings", "Bracelets", "Earrings","Anklets","Pooja Silverware"],
       required: true,
     },
-    Weight: { type: Number, required: false }, // in grams
+    weight: { type: Number, required: false, default:null }, // in grams
     description: { type: String, trim: true },
     imageUrl: { type: String, trim: true }, // make sure frontend uses this key
     availableOnline: { type: Boolean, default: false }, // false → orders via WhatsApp
