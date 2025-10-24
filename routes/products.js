@@ -25,15 +25,12 @@ router.use(
 );
 
 // ✅ Helper: Build correct image URL
-const makeImageUrl = (img, req) => {
+const makeImageUrl = (img) => {
   if (!img) return null;
 
-  // already a full URL
   if (img.startsWith("http://") || img.startsWith("https://")) return img;
 
-  // if it's stored under /images/products locally or in Render
- return `https://khushijewllers.onrender.com/images/products/${path.basename(img)}`;
-
+  return `https://khushijewllers.onrender.com/images/products/${path.basename(img)}`;
 };
 
 // ✅ Fetch all products (with filtering)
