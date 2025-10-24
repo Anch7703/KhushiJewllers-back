@@ -1,4 +1,3 @@
-// routes/products.js
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
@@ -6,10 +5,12 @@ const Product = require("../models/Product");
 
 const router = express.Router();
 
-// ✅ Always keep both localhost and production frontends
+// ✅ Allow both local + production domains
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://khushijewellers-front.onrender.com", // your Render frontend
+  "https://khushijewellers-front.onrender.com",
+  "https://khushijewellers.co.in",
+  "https://www.khushijewellers.co.in"
 ];
 
 router.use(
@@ -24,17 +25,17 @@ router.use(
   })
 );
 
+// ✅ Helper for generating image URLs
 const makeImageUrl = (img) => {
   if (!img) return null;
 
-  // Already a full URL
   if (img.startsWith("http://") || img.startsWith("https://")) return img;
 
-  // Use your actual backend domain
+  // ✅ your actual backend domain
   return `https://khushijewllers.onrender.com/images/products/${path.basename(img)}`;
 };
 
-// ✅ Fetch all products (with filtering)
+// ✅ Fetch all products
 router.get("/", async (req, res) => {
   try {
     const { category, subcategory, featured, limit } = req.query;
@@ -56,7 +57,7 @@ router.get("/", async (req, res) => {
 
       return {
         ...doc,
-        imageUrl: makeImageUrl(imageField, req),
+        imageUrl: makeImageUrl(imageField),
       };
     });
 
@@ -78,7 +79,7 @@ router.get("/:id", async (req, res) => {
 
     res.json({
       ...doc,
-      imageUrl: makeImageUrl(imageField, req),
+      imageUrl: makeImageUrl(imageField),
     });
   } catch (err) {
     console.error("❌ Product ID fetch error:", err);
